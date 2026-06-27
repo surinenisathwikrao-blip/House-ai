@@ -72,12 +72,12 @@ if st.button("Generate Report"):
     pdf_file = generate_pdf(input_df.iloc[0], prediction)
 
     with open(pdf_file, "rb") as f:
-    st.download_button(
-        label="📄 Download PDF Report",
-        data=f,
-        file_name="house_estimate.pdf",
-        mime="application/pdf"
-    )
+        st.download_button(
+            label="📄 Download PDF Report",
+            data=f,
+            file_name="house_estimate.pdf",
+            mime="application/pdf"
+        )
 
     # Breakdown
     labels = ["Cement", "Steel", "Bricks", "Labor", "Finishing"]
