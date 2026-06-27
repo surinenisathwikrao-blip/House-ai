@@ -1,28 +1,43 @@
 import streamlit as st
-import joblib
 import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.pipeline import Pipeline
 
-model = joblib.load("model.pkl")
-
-st.set_page_config(page_title="Telangana House AI", page_icon="🏠")
+st.set_page_config(page_title="House AI Pro", page_icon="🏠", layout="centered")
 
 st.title("🏠 Telangana Construction AI Pro")
+st.markdown("Professional construction cost estimation system")
 
-st.markdown("Get full construction estimate + material breakdown")
+# Load data
+data = pd.read_csv("house_data.csv")
 
-district = st.selectbox("District", [
-    "Hyderabad", "Warangal", "Karimnagar",
-    "Nizamabad", "Khammam", "Vijayawada"
+X = data[["District", "Area", "Type", "Floors"]]
+y = data["Cost"]
+
+# Model
+preprocessor = ColumnTransformer([
+    ("cat", OneHotEncoder(handle_unknown="ignore"), ["District", "Type"]),
+    ("num", "passthrough", ["Area", "Floors"])
 ])
 
-area = st.number_input("Area (sq.ft)", 500, 10000, 1200)
+model = Pipeline([
+    ("prep", preprocessor),
+    ("rf", RandomForestRegressor(n_estimators=150, random_state=42))
+])
 
+model.fit(X, y)
+
+# Inputs
+district = st.selectbox("District", data["District"].unique())
+area = st.slider("Area (sq.ft)", 500, 5000, 1200)
 house_type = st.selectbox("House Type", ["Budget", "Middle", "Luxury"])
-
 floors = st.number_input("Floors", 1, 10, 1)
 
-if st.button("Generate Estimate"):
-    
+if st.button("Generate Report"):
+
     input_df = pd.DataFrame({
         "District": [district],
         "Area": [area],
@@ -30,31 +45,34 @@ if st.button("Generate Estimate"):
         "Floors": [floors]
     })
 
-    base_cost = model.predict(input_df)[0]
+    prediction = model.predict(input_df)[0]
 
-    # Material breakdown (approx logic)
-    cement_cost = base_cost * 0.20
-    steel_cost = base_cost * 0.25
-    bricks_cost = base_cost * 0.10
-    labor_cost = base_cost * 0.30
-    finishing_cost = base_cost * 0.15
+    st.success(f"Total Estimated Cost: ₹ {int(prediction):,}")
 
-    # Time estimation
-    if area < 1200:
-        months = 6
-    elif area < 2000:
-        months = 9
-    else:
-        months = 12
+    # Breakdown
+    labels = ["Cement", "Steel", "Bricks", "Labor", "Finishing"]
+    values = [
+        prediction * 0.20,
+        prediction * 0.25,
+        prediction * 0.10,
+        prediction * 0.30,
+        prediction * 0.15
+    ]
 
-    st.success(f"Total Estimated Cost: ₹ {int(base_cost):,}")
+    st.subheader("📊 Cost Breakdown")
 
-    st.subheader("📦 Material Breakdown")
-    st.write(f"Cement: ₹ {int(cement_cost):,}")
-    st.write(f"Steel: ₹ {int(steel_cost):,}")
-    st.write(f"Bricks: ₹ {int(bricks_cost):,}")
-    st.write(f"Labor: ₹ {int(labor_cost):,}")
-    st.write(f"Finishing: ₹ {int(finishing_cost):,}")
+    fig, ax = plt.subplots()
+    ax.bar(labels, values)
+    plt.xticks(rotation=30)
+    st.pyplot(fig)
 
-    st.subheader("⏱️ Construction Time")
-    st.info(f"Estimated Time: {months} months")
+    st.subheader("📄 Report Summary")
+    st.write({
+        "District": district,
+        "Area": area,
+        "Type": house_type,
+        "Floors": floors,
+        "Total Cost": int(prediction)
+    })
+
+    st.info("This is an estimated value for planning purposes only.")
