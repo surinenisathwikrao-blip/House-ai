@@ -5,6 +5,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
+from fpdf import FPDF
 
 st.set_page_config(page_title="House AI Pro", page_icon="🏠", layout="centered")
 
@@ -30,6 +31,26 @@ model = Pipeline([
 
 model.fit(X, y)
 
+def generate_pdf(data, cost):
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(200, 10, txt="House Construction Report", ln=True)
+
+    pdf.cell(200, 10, txt=f"District: {data['District']}", ln=True)
+    pdf.cell(200, 10, txt=f"Area: {data['Area']} sq.ft", ln=True)
+    pdf.cell(200, 10, txt=f"Type: {data['Type']}", ln=True)
+    pdf.cell(200, 10, txt=f"Floors: {data['Floors']}", ln=True)
+
+    pdf.cell(200, 10, txt=f"Total Cost: ₹{int(cost):,}", ln=True)
+
+    file_name = "house_report.pdf"
+    pdf.output(file_name)
+
+    return file_name
+
 # Inputs
 district = st.selectbox("District", data["District"].unique())
 area = st.slider("Area (sq.ft)", 500, 5000, 1200)
@@ -48,6 +69,15 @@ if st.button("Generate Report"):
     prediction = model.predict(input_df)[0]
 
     st.success(f"Total Estimated Cost: ₹ {int(prediction):,}")
+    pdf_file = generate_pdf(input_df.iloc[0], prediction)
+
+with open(pdf_file, "rb") as f:
+    st.download_button(
+        label="📄 Download PDF Report",
+        data=f,
+        file_name="house_estimate.pdf",
+        mime="application/pdf"
+    )
 
     # Breakdown
     labels = ["Cement", "Steel", "Bricks", "Labor", "Finishing"]
@@ -76,3 +106,4 @@ if st.button("Generate Report"):
     })
 
     st.info("This is an estimated value for planning purposes only.")
+    
