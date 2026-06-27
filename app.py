@@ -71,7 +71,7 @@ if st.button("Generate Report"):
     st.success(f"Total Estimated Cost: ₹ {int(prediction):,}")
     pdf_file = generate_pdf(input_df.iloc[0], prediction)
 
-with open(pdf_file, "rb") as f:
+    with open(pdf_file, "rb") as f:
     st.download_button(
         label="📄 Download PDF Report",
         data=f,
