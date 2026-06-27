@@ -44,7 +44,7 @@ def generate_pdf(data, cost):
     pdf.cell(200, 10, txt=f"Type: {data['Type']}", ln=True)
     pdf.cell(200, 10, txt=f"Floors: {data['Floors']}", ln=True)
 
-    pdf.cell(200, 10, txt=f"Total Cost: ₹{int(cost):,}", ln=True)
+    pdf.cell(200, 10, txt=f"Total Cost: {int(cost):,}", ln=True)
 
     file_name = "house_report.pdf"
     pdf.output(file_name)
